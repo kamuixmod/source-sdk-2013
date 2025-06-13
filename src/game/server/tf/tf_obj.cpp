@@ -249,6 +249,7 @@ CBaseObject::CBaseObject()
 	m_bCarryDeploy = false;
 	m_flCarryDeployTime = 0;
 	m_iHealthOnPickup = 0;
+        m_iBuildCost = 0;
 	m_iLifetimeDamage = 0;
 	m_bCannotDie = false;
 	m_bMiniBuilding = false;
@@ -1324,17 +1325,22 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 
 		if ( !IsCarried() )
 		{
-			if ( !ShouldQuickBuild() )
-			{
-				int iAmountPlayerPaidForMe = ((CTFPlayer*)pBuilder)->StartedBuildingObject( m_iObjectType );
-				if ( !iAmountPlayerPaidForMe )
-				{
-					// Player couldn't afford to pay for me, so abort
-					ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "#TF_Not_Enough_Resources" );
-					StopPlacement();
-					return false;
-				}
-			}
+                       if ( !ShouldQuickBuild() )
+                       {
+                               int iAmountPlayerPaidForMe = ((CTFPlayer*)pBuilder)->StartedBuildingObject( m_iObjectType );
+                               m_iBuildCost = iAmountPlayerPaidForMe;
+                               if ( !iAmountPlayerPaidForMe )
+                               {
+                                       // Player couldn't afford to pay for me, so abort
+                                       ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "#TF_Not_Enough_Resources" );
+                                       StopPlacement();
+                                       return false;
+                               }
+                       }
+                       else
+                       {
+                               m_iBuildCost = 0;
+                       }
 
 			((CTFPlayer*)pBuilder)->SpeakConceptIfAllowed( MP_CONCEPT_BUILDING_OBJECT, GetResponseRulesModifier() );
 		}
@@ -2252,7 +2258,7 @@ void CBaseObject::CreateObjectGibs( void )
 
 	// grant some percentage of the cost to build if number of metal to drop is not specified
 	const float flMetalCostPercentage = 0.5f;
-	const int nTotalMetal = pObjectInfo->m_iMetalToDropInGibs == 0 ? pObjectInfo->m_Cost * flMetalCostPercentage : pObjectInfo->m_iMetalToDropInGibs;
+       const int nTotalMetal = pObjectInfo->m_iMetalToDropInGibs == 0 ? m_iBuildCost * flMetalCostPercentage : pObjectInfo->m_iMetalToDropInGibs;
 
 	
 	int nMetalPerGib = nTotalMetal / m_aGibs.Count();
@@ -2477,9 +2483,14 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 	}
 
 	// Don't create gibs if it reversed back to a toolbox
-	if ( IsUsingReverseBuild() && ( DMG_CRUSH & info.GetDamageType() ) != 0 )
-	{
-		CTFAmmoPack *pAmmoPack = CreateAmmoPack( "models/weapons/w_models/w_toolbox.mdl", GetObjectInfo( ObjectType() )->m_iMetalToDropInGibs );
+       if ( IsUsingReverseBuild() && ( DMG_CRUSH & info.GetDamageType() ) != 0 )
+       {
+               int nMetal = GetObjectInfo( ObjectType() )->m_iMetalToDropInGibs;
+               if ( nMetal == 0 )
+               {
+                       nMetal = m_iBuildCost * 0.5f;
+               }
+               CTFAmmoPack *pAmmoPack = CreateAmmoPack( "models/weapons/w_models/w_toolbox.mdl", nMetal );
 		if ( pAmmoPack )
 		{
 			pAmmoPack->SetBodygroup( 1, 1 );

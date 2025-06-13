@@ -122,6 +122,7 @@ ConVar tf_invuln_time( "tf_invuln_time", "1.0", FCVAR_DEVELOPMENTONLY | FCVAR_RE
 extern ConVar tf_player_movement_restart_freeze;
 extern ConVar mp_tournament_readymode_countdown;
 extern ConVar tf_max_charge_speed;
+extern ConVar tf_building_hazard_multiplier;
 
 ConVar tf_always_loser( "tf_always_loser", "0", FCVAR_CHEAT | FCVAR_REPLICATED, "Force loserstate to true." );
 
@@ -11436,17 +11437,25 @@ int CTFPlayerShared::CalculateObjectCost( CTFPlayer* pBuilder, int iObjectType )
 	}
 	
 
-	if ( iObjectType == OBJ_TELEPORTER )
-	{
-		float flCostMod = 1.f;
-		CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pBuilder, flCostMod, mod_teleporter_cost );
-		if ( flCostMod != 1.f )
-		{
-			nCost *= flCostMod;
-		}
-	}
+        if ( iObjectType == OBJ_TELEPORTER )
+        {
+                float flCostMod = 1.f;
+                CALL_ATTRIB_HOOK_FLOAT_ON_OTHER( pBuilder, flCostMod, mod_teleporter_cost );
+                if ( flCostMod != 1.f )
+                {
+                        nCost *= flCostMod;
+                }
+        }
 
-	CALL_ATTRIB_HOOK_INT_ON_OTHER( pBuilder, nCost, building_cost_reduction );
+       if ( TFGameRules() && TFGameRules()->IsMannVsMachineMode() )
+       {
+               if ( !TFGameRules()->InSetup() && !TFObjectiveResource()->GetMannVsMachineIsBetweenWaves() )
+               {
+                       nCost = RoundFloatToInt( nCost * tf_building_hazard_multiplier.GetFloat() );
+               }
+       }
+
+        CALL_ATTRIB_HOOK_INT_ON_OTHER( pBuilder, nCost, building_cost_reduction );
 	
 	return nCost;
 }

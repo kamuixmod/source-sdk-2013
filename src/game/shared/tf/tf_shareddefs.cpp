@@ -1460,7 +1460,7 @@ void LoadObjectInfos( IBaseFileSystem *pFileSystem )
 			// Does it make sense to call the below Steam API so it'll force a validation next startup time?
 			// Need to verify it's real corruption and not someone dorking around with their objects.txt file...
 			//
-			// From Martin Otten: If you have a file on disc and you’re 100% sure it’s
+			// From Martin Otten: If you have a file on disc and youÂ’re 100% sure itÂ’s
 			//  corrupt, call ISteamApps::MarkContentCorrupt( false ), before you shutdown
 			//  the game. This will cause a content validation in Steam.
 
@@ -1548,6 +1548,7 @@ const CObjectInfo* GetObjectInfo( int iObject )
 }
 
 ConVar tf_cheapobjects( "tf_cheapobjects","0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Set to 1 and all objects will cost 0" );
+ConVar tf_building_hazard_multiplier( "tf_building_hazard_multiplier", "1.0", FCVAR_REPLICATED, "Cost multiplier for buildings placed outside of setup time" );
 
 //-----------------------------------------------------------------------------
 // Purpose: Return the cost of another object of the specified type

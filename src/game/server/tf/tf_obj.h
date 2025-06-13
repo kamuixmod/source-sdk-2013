@@ -502,6 +502,7 @@ private:
 
 	// for ACHIEVEMENT_TF_ENGINEER_TANK_DAMAGE
 	int		m_iLifetimeDamage;
+        int             m_iBuildCost;
 
 	bool	m_bCannotDie;
 	bool	m_bQuickBuild;
