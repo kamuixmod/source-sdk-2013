@@ -1,0 +1,7 @@
+# MvM VScript wave control notes
+
+The existing VScript bindings exposed through `CTFGameRules::RegisterScriptFunctions` only cover high-level state queries (for example `IsMannVsMachineMode`, `GameModeUsesCurrency`, ready status helpers, and similar toggles). There are no script-callable helpers that start, end, or reset an active Mann vs Machine wave. `RegisterScriptFunctions` registers gameplay flags but nothing related to `CPopulationManager` or wave transitions, so VScript cannot directly finish or restart the current wave.【F:src/game/shared/tf/tf_gamerules.cpp†L22429-L22469】
+
+Wave lifecycle control lives in `CPopulationManager::JumpToWave` and `CPopulationManager::WaveEnd`. `JumpToWave` forcibly finishes the current wave (`ForceFinish`), resets the target wave (`ForceReset`), and pushes the rules back into the pre-round state before firing the `mvm_reset_stats` game event. `WaveEnd` fires accumulated score updates and advances the wave index on success. These functions are not registered as script functions or referenced by the VScript interface, so they cannot be invoked from scripts without adding new bindings.【F:src/game/server/tf/player_vs_environment/tf_population_manager.cpp†L1125-L1174】
+
+To allow VScript to restart or finish waves, new bindings would need to expose the relevant `CPopulationManager` methods (for example, wrapping `JumpToWave` for a reset-style call or `WaveEnd` for a forced completion) similar to how other gameplay flags are registered in `RegisterScriptFunctions`.
